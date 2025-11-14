@@ -6,7 +6,7 @@ import base64
 import shutil
 from datetime import datetime
 from pathlib import Path
-from bottle import route, run, template, post, request, static_file
+from bottle import route, run, template, post, request, static_file, default_app
 
 
 
@@ -56,7 +56,7 @@ def getToken():
 def Registro():
 	dbcnf = loadDatabaseSettings('db.json');
 	db = mysql.connector.connect(
-		host='localhost', port = dbcnf['port'],
+		host='0.0.0.0', port = dbcnf['port'],
 		database = dbcnf['dbname'],
 		user = dbcnf['user'],
 		password = dbcnf['password']
@@ -209,7 +209,7 @@ def Imagen():
 	
 	
 	id_Usuario = R[0][0];
-	with open(f'tmp/{id_Usuario}',"wb") as imagen:
+	with open(f'tmp/{id_Usuario}_{request.json["name"]}',"wb") as imagen:
 		imagen.write(base64.b64decode(request.json['data'].encode()))
 	
 	############################
@@ -224,7 +224,7 @@ def Imagen():
 			cursor.execute('update Imagen set ruta = "img/'+str(idImagen)+'.'+str(request.json['ext'])+'" where id = '+str(idImagen));
 			db.commit()
 			# Mover archivo a su nueva locacion
-			shutil.move('tmp/'+str(id_Usuario),'img/'+str(idImagen)+'.'+str(request.json['ext']))
+			shutil.move(f'tmp/{id_Usuario}_{request.json["name"]}',f'img/{idImagen}.{request.json["ext"]}')
 			return {"R":0,"D":idImagen}
 	except Exception as e: 
 		print(e)
@@ -272,7 +272,7 @@ def Descargar():
 	R = False
 	try:
 		with db.cursor() as cursor:
-			cursor.execute('select id_Usuario from AccesoToken where token = "'+TKN+'"');
+			cursor.execute('SELECT id_Usuario FROM AccesoToken WHERE token = %s',(TKN,));
 			R = cursor.fetchall()
 	except Exception as e: 
 		print(e)
@@ -285,14 +285,27 @@ def Descargar():
 	
 	try:
 		with db.cursor() as cursor:
-			cursor.execute('Select name,ruta from  Imagen where id = '+str(idImagen));
+			#VERIFICA QUE LA IMAGEN PERTENEZCA AL USUARIO
+			cursor.execute('''SELECT i.name, i.ruta
+					FROM Imagen i
+					JOIN AccesoToken at ON i.id_Usuario=at.id_Usuario
+					WHERE i.id=%s AND at.token=%s''',
+					(IdImagen,TKN))
 			R = cursor.fetchall()
+			#NUEVA VALIDACION
+			if not R:
+				db.close()
+				return {"R":-4, "error": "Imagen no encontrada no tienes permisos"}
 	except Exception as e: 
 		print(e)
 		db.close()
 		return {"R":-3}
 	print(Path("img").resolve(),R[0][1])
-	return static_file(R[0][1],Path(".").resolve())
+	return static_file(R[0][1],root='.')
+app = application = default_app()
 
 if __name__ == '__main__':
-    run(host='localhost', port=8080, debug=True)
+    run(host='0.0.0.0', port=8443, debug=True,
+	server='cheroot',
+        certfile='./178.128.72.88+2.pem',
+        keyfile='./178.128.72.88+2-key.pem')
