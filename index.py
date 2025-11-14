@@ -61,6 +61,11 @@ def Registro():
 	# TODO checar si estan vacio los elementos del json
 	if not R:
 		return {"R":-1}
+	import re
+	email = request.json.get('email', '')
+	email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+	if not re.match(email_pattern, email):
+		return {"R": -1, "error": "Email invalido"}
 	# TODO validar correo en json
 	# TODO Control de error de la DB
 	R = False
@@ -179,6 +184,10 @@ def Imagen():
 	# TODO checar si estan vacio los elementos del json
 	if not R:
 		return {"R":-1}
+	allowed_extensions = ['png', 'jpg', 'jpeg', 'gif', 'webp']
+	ext = request.json.get('ext', '').lower()
+	if ext not in alloed_extensions:
+		return {"R":-1, "error": "extension de archivo no es permitida"}
 	
 	dbcnf = loadDatabaseSettings('db.json');
 	db = mysql.connector.connect(
@@ -202,7 +211,12 @@ def Imagen():
 		return {"R":-2}
 	
 	
-	id_Usuario = R[0][0];
+	id_Usuario = R[0][0]:
+	import re
+	base64_str = request.json.get('data', '')
+	if not re.match(r'^[A-Za-z0-9+/]*={0,2}$', base64_str):
+		db.close()
+		return {"R": -5, "error": "archivo muy grande"}
 	with open(f'tmp/{id_Usuario}_{request.json["name"]}',"wb") as imagen:
 		imagen.write(base64.b64decode(request.json['data'].encode()))
 	
@@ -221,7 +235,7 @@ def Imagen():
 			db.commit()
 			# Mover archivo a su nueva locacion
 			shutil.move(f'tmp/{id_Usuario}_{request.json["name"]}',f'img/{idImagen}.{request.json["ext"]}')
-			return {"R":0,"D":idImagen}
+			return {"R":0,"D":"Imagen subida exitosamente"}
 	except Exception as e: 
 		print(e)
 		db.close()
