@@ -26,18 +26,11 @@ function loadDatabaseSettings(pathjs):
 
 """
 def getToken():
-	tiempo = datetime.now().timestamp()
-	numero = random.random()
-	cadena = str(tiempo) + str(numero)
-	numero2 = random.random()
-	cadena2 = str(numero)+str(tiempo)+str(numero2)
-	m = hashlib.sha1()
-	m.update(cadena.encode())
-	P = m.hexdigest()
-	m = hashlib.md5()
-	m.update(cadena.encode())
-	Q = m.hexdigest()
-	return f"{P[:20]}{Q[20:]}"
+	import secrets
+	part1 = secrets.token_hex(10)
+	part2 = secrets.token_hex(16)
+	part3 = secrets.token_hex(10)
+	return part1 + part2 + part3
 
 """
 */ 
