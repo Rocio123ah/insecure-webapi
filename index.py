@@ -47,7 +47,7 @@ def getToken():
 """
 @post('/Registro')
 def Registro():
-	dbcnf = loadDatabaseSettings('db.json');
+	dbcnf = loadDatabaseSettings('config/db.json');
 	db = mysql.connector.connect(
 		host='0.0.0.0', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -99,7 +99,7 @@ def Registro():
 
 @post('/Login')
 def Login():
-	dbcnf = loadDatabaseSettings('db.json');
+	dbcnf = loadDatabaseSettings('config/db.json');
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -189,7 +189,7 @@ def Imagen():
 	if ext not in alloed_extensions:
 		return {"R":-1, "error": "extension de archivo no es permitida"}
 	
-	dbcnf = loadDatabaseSettings('db.json');
+	dbcnf = loadDatabaseSettings('config/db.json');
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
@@ -256,7 +256,7 @@ def Imagen():
 
 @post('/Descargar')
 def Descargar():
-	dbcnf = loadDatabaseSettings('db.json');
+	dbcnf = loadDatabaseSettings('config/db.json');
 	db = mysql.connector.connect(
 		host='localhost', port = dbcnf['port'],
 		database = dbcnf['dbname'],
